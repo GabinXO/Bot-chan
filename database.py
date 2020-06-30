@@ -45,8 +45,10 @@ def get_image(chan_name):
 
 
 def add_user(user):
-    query = f'''INSERT INTO users(id, last_roll, roll_count, inventory_price, username)
-                VALUES({user.id},0,0,0,\'{user.name}\');'''
+    query = f'''INSERT INTO
+                users(id, last_roll, roll_count, inventory_price,
+                username, user_rank, prestige)
+                VALUES({user.id},0,0,0,\'{user.name}\',0,0);'''
     mysql_set(query)
     table_name = 'u' + str(user.id)
     query = f'''CREATE TABLE {table_name} (
@@ -55,6 +57,7 @@ def add_user(user):
                chan_progress SMALLINT
                );'''
     mysql_set(query)
+
 
 def update_username(user):
     query = f'SELECT username FROM users WHERE id = {user.id};'
@@ -144,22 +147,35 @@ def calculate_inventory_price(user, rarity=-1):
         query = f'''SELECT {table_name}.chan_level, chans.rarity
                     FROM {table_name} LEFT JOIN chans
                     ON {table_name}.chan_id = chans.id
-                    WHERE chans.rarity = {rarity}'''
+                    WHERE chans.rarity = {rarity};'''
         chan_list = mysql_get(query)
     for chan in chan_list:
         chan_level, chan_rarity = chan
-        chan_value = RARITY[chan_rarity][2]
+        chan_value = RARITIES[chan_rarity][2]
         inventory_price += chan_value * (2 ** (chan_level - 1))
     return inventory_price
 
 
 def update_inventory_price(user):
     inventory_price = calculate_inventory_price(user)
-    query = f'UPDATE users SET inventory_price={inventory_price} WHERE id={user.id}'
+    query = f'UPDATE users SET inventory_price={inventory_price} WHERE id={user.id};'
     mysql_set(query)
 
 
 def get_inventory_price(user_id):
-    query = f'SELECT inventory_price FROM users WHERE id={user_id}'
+    query = f'SELECT inventory_price FROM users WHERE id={user_id};'
     inventory_price = mysql_get(query)[0][0]
     return inventory_price
+
+
+def get_rank(user):
+    query = f'SELECT user_rank FROM users WHERE id={user.id};'
+    user_rank = mysql_get(query)[0][0]
+    return user_rank
+
+
+def get_prestige_stars(user):
+    query = f'SELECT prestige FROM users WHERE id={user.id};'
+    prestige = mysql_get(query)[0][0]
+    stars = prestige * '★'
+    return stars

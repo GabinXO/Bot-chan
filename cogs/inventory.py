@@ -1,7 +1,8 @@
 import discord
 from discord.ext import commands
 from database import *
-from config import RARITY
+from config import RARITIES
+from descriptions import INV_BRF, INV_DSC, RESET_BRF, RESET_DSC
 
 
 class Inventory(commands.Cog):
@@ -9,8 +10,8 @@ class Inventory(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    @commands.command(aliases=['inv', 'i'], brief='Shows your chan inventory')
-    async def inventory(self, ctx):
+    @commands.command(aliases=['i', 'inventory'], brief=INV_BRF, description=INV_DSC)
+    async def inv(self, ctx):
         user = ctx.author
         check_user_exists(user)
         username = user.display_name
@@ -27,7 +28,7 @@ class Inventory(commands.Cog):
                                 value='\n'.join(chan_list), inline=False)
         await ctx.send(embed=embed)
 
-    @commands.command(brief='Reset everything in your account')
+    @commands.command(brief=RESET_BRF, description=RESET_DSC)
     async def reset(self, ctx):
         user = ctx.author
         check_user_exists(user)
@@ -50,6 +51,7 @@ class Inventory(commands.Cog):
                                                         timeout=20.0)
             if reaction.emoji == '\N{REGIONAL INDICATOR SYMBOL LETTER Y}':
                 reset_account(user)
+                print(f'{user.name}\'s account has been reset')
                 await ctx.send(f'{username}\'s account has been reset.')
             elif reaction.emoji == '\N{REGIONAL INDICATOR SYMBOL LETTER N}':
                 await ctx.send(f'{username}\'s account has not been reset.')
@@ -78,7 +80,7 @@ def get_chan_list(user, rarity):
 
 
 def get_field_name(user, rarity):
-    rarity_name = RARITY[rarity][0]
+    rarity_name = RARITIES[rarity][0].upper()
     chan_count = get_chan_count(user, rarity)
     chan_total_count = get_chan_total_count(rarity)
     field_name = f'**{rarity_name} [{chan_count}/{chan_total_count}]**'
